@@ -63,19 +63,28 @@ public final class DisplayController {
     public func recoverIfNeeded() -> [String] {
         let displays = backend.connectedDisplays()
         let targets = SafetyGuard.uuidsToRecover(displays: displays, offByApp: registry.offByApp)
-        for uuid in targets {
-            try? backend.setEnabled(uuid: uuid, enabled: true)
-            registry.markOn(uuid)
-        }
-        return targets
+        return recover(targets)
     }
 
-    /// G4: 시작할 때 이전 세션에서 꺼 둔 모니터를 모두 켠다.
+    /// G4: 시작할 때 이전 세션에서 꺼 둔 모니터를 다시 켜고, 실패한 항목은 재시도할 수 있게 남긴다.
     public func recoverAtLaunch() {
-        for uuid in registry.offByApp {
-            try? backend.setEnabled(uuid: uuid, enabled: true)
+        recover(registry.offByApp.sorted())
+    }
+
+    @discardableResult
+    private func recover(_ targets: [String]) -> [String] {
+        var recovered: [String] = []
+        for uuid in targets {
+            do {
+                try backend.setEnabled(uuid: uuid, enabled: true)
+                registry.markOn(uuid)
+                recovered.append(uuid)
+            } catch {
+                // 연결 상태가 바뀌면 다시 시도할 수 있도록 기록을 유지한다.
+                continue
+            }
         }
-        registry.clearOffMarks()
+        return recovered
     }
 
     // MARK: - 스냅샷과 복원
