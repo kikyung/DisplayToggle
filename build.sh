@@ -9,13 +9,20 @@ BIN="$(swift build -c release --show-bin-path)/DisplayToggle"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/DisplayToggle"
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+$(for d in Resources/*.lproj; do echo "        <string>$(basename "$d" .lproj)</string>"; done)
+    </array>
     <key>CFBundleName</key><string>DisplayToggle</string>
     <key>CFBundleDisplayName</key><string>DisplayToggle</string>
     <key>CFBundleIdentifier</key><string>com.displaytoggle.app</string>
