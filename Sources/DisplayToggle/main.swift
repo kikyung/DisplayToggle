@@ -1,17 +1,38 @@
+import AppKit
 import DisplayToggleCore
-import Foundation
 
-// Task 8에서 메뉴바 앱으로 교체한다. 지금은 모니터를 건드리지 않는 조회 명령만 있다.
+let backend = CoreGraphicsBackend()
+
+func defaultRegistryURL() -> URL {
+    let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    return base.appendingPathComponent("DisplayToggle/displays.json")
+}
+
+// 모니터를 건드리지 않는 조회 명령
 if CommandLine.arguments.contains("--list") {
-    let backend = CoreGraphicsBackend()
     let controller = DisplayController(backend: backend, registry: DisplayRegistry(fileURL: nil))
     print("toggleAvailable=\(backend.isToggleAvailable)")
-    print("raw:")
-    for d in backend.connectedDisplays() {
-        print("  \(d.uuid) name=\(d.name ?? "nil") active=\(d.isActive) builtin=\(d.isBuiltin) placement=\(String(describing: d.placement))")
-    }
-    print("entries:")
-    for e in controller.entries() { print("  \(e.uuid) \(e.name) active=\(e.isActive)") }
-} else {
-    print("DisplayToggle (--list 로 모니터 목록 확인)")
+    for e in controller.entries() { print("\(e.uuid) \(e.name) active=\(e.isActive)") }
+    exit(0)
 }
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var menuBar: MenuBarController?
+    private let watcher = ReconfigWatcher()
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        let controller = DisplayController(backend: backend, registry: DisplayRegistry(fileURL: defaultRegistryURL()))
+        // G4: 이전 세션에서 꺼 둔 모니터를 모두 켠다.
+        controller.recoverAtLaunch()
+        let menuBar = MenuBarController(controller: controller, backend: backend)
+        self.menuBar = menuBar
+        // G3: 구성 변경 후 켜진 모니터가 0개가 되면 복구한다.
+        watcher.start { menuBar.handleReconfiguration() }
+    }
+}
+
+let app = NSApplication.shared
+app.setActivationPolicy(.accessory)  // Dock 아이콘 없음
+let delegate = AppDelegate()
+app.delegate = delegate
+app.run()
