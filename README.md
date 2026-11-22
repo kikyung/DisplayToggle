@@ -56,3 +56,7 @@ swift test
 - `Resources` contains the menu translations. To add a language, copy `en.lproj` to a new language folder, translate the values, and keep the keys and format placeholders. Run `swift test` to check parity and `./build.sh` to bundle the translations.
 
 See the [security policy](SECURITY.md) for vulnerability reporting and the [MIT license](LICENSE) for reuse terms.
+
+## Support
+
+If DisplayToggle is useful to you, you can [buy me a coffee](https://buymeacoffee.com/kikyung).
