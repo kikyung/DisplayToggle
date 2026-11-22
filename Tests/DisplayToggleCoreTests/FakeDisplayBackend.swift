@@ -8,6 +8,7 @@ final class FakeDisplayBackend: DisplayBackend {
     /// true이면 모니터 하나가 빠질 때 남은 모니터의 모드를 바꾼다. (문제 3 재현용)
     var driftOthersOnChange = false
     var failApply = false
+    var rebaseDisplaysOnChange = false
 
     init(displays: [DisplayInfo]) { self.displays = displays }
 
@@ -19,6 +20,17 @@ final class FakeDisplayBackend: DisplayBackend {
             throw DisplayToggleError.backend("unknown display")
         }
         displays[i].isActive = enabled
+        if rebaseDisplaysOnChange {
+            if enabled, var placement = displays[i].placement {
+                let otherDisplays = displays.filter { $0.uuid != uuid && $0.isActive }
+                placement.x = otherDisplays.compactMap { display in
+                    display.placement.map { $0.x + $0.mode.width }
+                }.max() ?? 0
+                placement.y = 0
+                displays[i].placement = placement
+            }
+            rebaseActiveDisplays()
+        }
         if driftOthersOnChange {
             for j in displays.indices where j != i && displays[j].isActive {
                 if var p = displays[j].placement {
@@ -35,6 +47,19 @@ final class FakeDisplayBackend: DisplayBackend {
         if failApply { throw DisplayToggleError.backend("apply failed") }
         for (uuid, p) in layout {
             if let i = displays.firstIndex(where: { $0.uuid == uuid }) { displays[i].placement = p }
+        }
+        if rebaseDisplaysOnChange { rebaseActiveDisplays() }
+    }
+
+    private func rebaseActiveDisplays() {
+        let active = displays.indices.filter { displays[$0].isActive && displays[$0].placement != nil }
+        if active.contains(where: { displays[$0].placement?.x == 0 && displays[$0].placement?.y == 0 }) {
+            return
+        }
+        guard let first = active.first, let origin = displays[first].placement else { return }
+        for index in active {
+            displays[index].placement?.x -= origin.x
+            displays[index].placement?.y -= origin.y
         }
     }
 }

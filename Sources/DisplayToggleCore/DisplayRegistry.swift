@@ -18,6 +18,7 @@ public final class DisplayRegistry {
     struct Store: Codable {
         var records: [String: Record] = [:]
         var offByApp: Set<String> = []
+        var layoutBeforeDisable: LayoutSnapshot?
     }
 
     private let fileURL: URL?
@@ -36,6 +37,7 @@ public final class DisplayRegistry {
     }
 
     public var offByApp: Set<String> { store.offByApp }
+    var layoutBeforeDisable: LayoutSnapshot { store.layoutBeforeDisable ?? [:] }
 
     public func lastPlacement(for uuid: String) -> DisplayPlacement? {
         store.records[uuid]?.lastPlacement
@@ -55,17 +57,26 @@ public final class DisplayRegistry {
     }
 
     public func markOff(_ uuid: String) {
+        markOff(uuid, layoutBeforeDisable: nil)
+    }
+
+    func markOff(_ uuid: String, layoutBeforeDisable: LayoutSnapshot?) {
+        if store.layoutBeforeDisable == nil {
+            store.layoutBeforeDisable = layoutBeforeDisable
+        }
         store.offByApp.insert(uuid)
         save()
     }
 
     public func markOn(_ uuid: String) {
         store.offByApp.remove(uuid)
+        if store.offByApp.isEmpty { store.layoutBeforeDisable = nil }
         save()
     }
 
     public func clearOffMarks() {
         store.offByApp.removeAll()
+        store.layoutBeforeDisable = nil
         save()
     }
 

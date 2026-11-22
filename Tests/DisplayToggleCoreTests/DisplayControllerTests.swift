@@ -89,6 +89,64 @@ final class DisplayControllerTests: XCTestCase {
         guard case .doneWithWarning = try c.disable(uuid: "G70") else { return XCTFail("expected a warning") }
     }
 
+    func testEnableAllRestoresArrangementAfterRemainingDisplayBecomesOrigin() throws {
+        let (backend, c) = make([Fixtures.lg(), Fixtures.g70()])
+        _ = try c.disable(uuid: "LG")
+        backend.displays[1].placement = DisplayPlacement(mode: Fixtures.modeG70, x: 0, y: 0)
+        _ = c.entries() // Opening the menu observes the temporary single-display layout.
+        backend.displays[0].placement = DisplayPlacement(mode: Fixtures.modeLG, x: -2560, y: 0)
+
+        XCTAssertEqual(c.enableAll(), [])
+        XCTAssertEqual(backend.displays[0].placement, Fixtures.lg().placement)
+        XCTAssertEqual(backend.displays[1].placement, Fixtures.g70().placement)
+    }
+
+    func testThreeDisplaysKeepRelativePlacementWhenPrimaryIsDisabled() throws {
+        let displays = multiDisplayFixtures(includeFourth: false)
+        let (backend, c) = make(displays)
+        backend.rebaseDisplaysOnChange = true
+
+        XCTAssertEqual(try c.disable(uuid: "LG"), .done)
+        XCTAssertEqual(backend.displays[2].placement?.x, 5568)
+        XCTAssertEqual(backend.displays[2].placement?.y, 803)
+        XCTAssertEqual(c.enableAll(), [])
+        XCTAssertEqual(backend.displays, displays)
+    }
+
+    func testFourDisplaysRecoverAfterRelaunchAndRetryMissingDisplay() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("displays.json")
+        let displays = multiDisplayFixtures(includeFourth: true)
+        let backend = FakeDisplayBackend(displays: displays)
+        backend.rebaseDisplaysOnChange = true
+        let c = DisplayController(backend: backend, registry: DisplayRegistry(fileURL: url))
+
+        _ = try c.disable(uuid: "LG")
+        _ = try c.disable(uuid: "G70")
+        _ = try c.disable(uuid: "Right")
+        XCTAssertThrowsError(try c.disable(uuid: "Above"))
+        _ = c.entries()
+        let missing = backend.displays.remove(at: 1)
+        let relaunched = DisplayController(backend: backend, registry: DisplayRegistry(fileURL: url))
+        relaunched.recoverAtLaunch()
+
+        XCTAssertEqual(relaunched.registry.offByApp, ["G70"])
+        backend.displays.insert(missing, at: 1)
+        XCTAssertEqual(relaunched.enableAll(), [])
+        XCTAssertEqual(backend.displays, displays)
+        XCTAssertTrue(relaunched.registry.layoutBeforeDisable.isEmpty)
+    }
+
+    private func multiDisplayFixtures(includeFourth: Bool) -> [DisplayInfo] {
+        let right = DisplayInfo(uuid: "Right", name: "Right", isActive: true,
+                                placement: DisplayPlacement(mode: Fixtures.modeLG, x: 2560, y: 500))
+        let above = DisplayInfo(uuid: "Above", name: "Above", isActive: true,
+                                placement: DisplayPlacement(mode: Fixtures.modeLG, x: 200, y: -1440))
+        let displays = [Fixtures.lg(), Fixtures.g70(), right]
+        return includeFourth ? displays + [above] : displays
+    }
+
     func testEnableRestoresLastMode() throws {
         let (backend, c) = make([Fixtures.lg(), Fixtures.g70()])
         _ = try c.disable(uuid: "G70")
