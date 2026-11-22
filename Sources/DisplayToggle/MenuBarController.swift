@@ -18,9 +18,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         self.backend = backend
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
-        let image = NSImage(systemSymbolName: "display", accessibilityDescription: "DisplayToggle")
-        image?.isTemplate = true
-        statusItem.button?.image = image
+        statusItem.button?.image = MenuBarIcon.makeImage()
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
