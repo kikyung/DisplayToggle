@@ -10,6 +10,7 @@ DisplayToggle lives in the menu bar only. It has no Dock icon and no windows.
 - **Turned-off displays stay in the list**, so you can switch them back on without touching cables or monitor inputs.
 - **Layout is preserved.** Before a change, the app records the resolution, refresh rate, and position of the other displays. If macOS changes them, the app restores them in one display configuration transaction.
 - **Safety guards** keep you from ending up with no screen (see [Safety](#safety)).
+- **Localized.** The menu follows the system language: English, Korean, Japanese, Simplified and Traditional Chinese, French, German, and Spanish. Other languages fall back to English.
 - **No dependencies.** Plain Swift Package, AppKit, and CoreGraphics.
 
 ## Requirements
@@ -82,6 +83,13 @@ MenuBarController ── DisplayController ── DisplayBackend (protocol)
 ReconfigWatcher ── recovery on configuration changes (G3)
 ```
 
+## Adding a language
+
+1. Copy `Resources/en.lproj` to `Resources/<language code>.lproj` (for example `it.lproj`).
+2. Translate the values in `Localizable.strings`. Keep the keys and any `%@` placeholders.
+3. Run `swift test`. It checks that every language has the same keys and placeholders as English.
+4. Run `./build.sh`. The new language is added to the app bundle and `Info.plist` automatically.
+
 ## Limitations
 
 - The app uses a private API. It cannot ship on the Mac App Store, and a future macOS release may change or remove the behavior.
@@ -99,6 +107,7 @@ swift test       # unit tests with a fake display backend
 |------|----------|
 | `Sources/DisplayToggleCore` | Models, safety rules, registry, controller, CoreGraphics backend |
 | `Sources/DisplayToggle` | Menu bar app (AppKit) |
+| `Resources/*.lproj` | Localized menu strings |
 | `Tests/DisplayToggleCoreTests` | Unit tests |
 | `docs/superpowers` | Design spec and implementation plan |
 
