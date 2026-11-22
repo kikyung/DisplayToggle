@@ -3,8 +3,8 @@ import DisplayToggleCore
 
 /// About 패널에 표시할 링크. 비어 있으면 표시하지 않는다.
 enum AppLinks {
-    static let github = ""
-    static let buyMeACoffee = ""
+    static let github = "https://github.com/kikyung/DisplayToggle"
+    static let buyMeACoffee = "https://buymeacoffee.com/kikyung"
 }
 
 final class MenuBarController: NSObject, NSMenuDelegate {
