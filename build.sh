@@ -7,11 +7,23 @@ APP="DisplayToggle.app"
 swift build -c release
 BIN="$(swift build -c release --show-bin-path)/DisplayToggle"
 
+ICON_DIR="$(mktemp -d)"
+trap 'rm -rf "$ICON_DIR"' EXIT
+ICONSET="$ICON_DIR/AppIcon.iconset"
+mkdir -p "$ICONSET"
+for size in 16 32 128 256 512; do
+    sips -z "$size" "$size" Resources/AppIcon.png --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+    retina_size=$((size * 2))
+    sips -z "$retina_size" "$retina_size" Resources/AppIcon.png --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$ICON_DIR/AppIcon.icns"
+
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 mkdir -p "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/DisplayToggle"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
+cp "$ICON_DIR/AppIcon.icns" "$APP/Contents/Resources/"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -25,6 +37,7 @@ $(for d in Resources/*.lproj; do echo "        <string>$(basename "$d" .lproj)</
     </array>
     <key>CFBundleName</key><string>DisplayToggle</string>
     <key>CFBundleDisplayName</key><string>DisplayToggle</string>
+    <key>CFBundleIconFile</key><string>AppIcon.icns</string>
     <key>CFBundleIdentifier</key><string>com.displaytoggle.app</string>
     <key>CFBundleExecutable</key><string>DisplayToggle</string>
     <key>CFBundlePackageType</key><string>APPL</string>
