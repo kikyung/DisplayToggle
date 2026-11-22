@@ -3,7 +3,7 @@ import Foundation
 public enum ToggleOutcome: Equatable {
     case done
     /// 동작은 성공했지만 다른 모니터의 해상도·배치를 복원하지 못했다.
-    case doneWithWarning(String)
+    case doneWithWarning(ToggleWarning)
 }
 
 public final class DisplayController {
@@ -95,11 +95,11 @@ public final class DisplayController {
         do {
             try backend.apply(layout: drifted)
         } catch {
-            return .doneWithWarning("다른 모니터의 해상도·배치를 복원하지 못했습니다")
+            return .doneWithWarning(.layoutNotRestored)
         }
         let verify = Self.snapshot(of: backend.connectedDisplays())
         if drifted.contains(where: { verify[$0.key] != $0.value }) {
-            return .doneWithWarning("다른 모니터의 해상도·배치를 복원하지 못했습니다")
+            return .doneWithWarning(.layoutNotRestored)
         }
         return .done
     }

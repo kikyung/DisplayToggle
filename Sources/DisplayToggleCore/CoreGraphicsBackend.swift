@@ -40,23 +40,23 @@ public final class CoreGraphicsBackend: DisplayBackend {
 
     public func setEnabled(uuid: String, enabled: Bool) throws {
         guard let fn = configureEnabled else {
-            throw DisplayToggleError.backend("이 macOS에서는 모니터 끄기를 사용할 수 없습니다")
+            throw DisplayToggleError.backend("CGSConfigureDisplayEnabled is not available on this macOS")
         }
         guard let id = Self.onlineIDs().first(where: { Self.uuid(of: $0) == uuid }) else {
-            throw DisplayToggleError.backend("모니터를 찾을 수 없습니다")
+            throw DisplayToggleError.backend("Display not found")
         }
         var config: CGDisplayConfigRef?
         guard CGBeginDisplayConfiguration(&config) == .success else {
-            throw DisplayToggleError.backend("구성 시작 실패")
+            throw DisplayToggleError.backend("CGBeginDisplayConfiguration failed")
         }
         let r = fn(config, id, enabled)
         guard r == .success else {
             CGCancelDisplayConfiguration(config)
-            throw DisplayToggleError.backend("CGSConfigureDisplayEnabled 실패 (\(r.rawValue))")
+            throw DisplayToggleError.backend("CGSConfigureDisplayEnabled failed (\(r.rawValue))")
         }
         let c = CGCompleteDisplayConfiguration(config, .forSession)
         guard c == .success else {
-            throw DisplayToggleError.backend("구성 적용 실패 (\(c.rawValue))")
+            throw DisplayToggleError.backend("CGCompleteDisplayConfiguration failed (\(c.rawValue))")
         }
     }
 
@@ -66,7 +66,7 @@ public final class CoreGraphicsBackend: DisplayBackend {
         })
         var config: CGDisplayConfigRef?
         guard CGBeginDisplayConfiguration(&config) == .success else {
-            throw DisplayToggleError.backend("구성 시작 실패")
+            throw DisplayToggleError.backend("CGBeginDisplayConfiguration failed")
         }
         for (uuid, placement) in layout {
             guard let id = ids[uuid] else { continue }
@@ -77,7 +77,7 @@ public final class CoreGraphicsBackend: DisplayBackend {
         }
         let c = CGCompleteDisplayConfiguration(config, .forSession)
         guard c == .success else {
-            throw DisplayToggleError.backend("구성 적용 실패 (\(c.rawValue))")
+            throw DisplayToggleError.backend("CGCompleteDisplayConfiguration failed (\(c.rawValue))")
         }
     }
 

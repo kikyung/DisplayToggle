@@ -19,7 +19,7 @@ final class DisplayControllerTests: XCTestCase {
     func testDisableLastDisplayIsRejectedAndBackendUntouched() {
         let (backend, c) = make([Fixtures.lg(), Fixtures.g70(active: false)])
         XCTAssertThrowsError(try c.disable(uuid: "LG")) {
-            XCTAssertEqual($0 as? DisplayToggleError, .blocked("마지막 화면은 끌 수 없음"))
+            XCTAssertEqual($0 as? DisplayToggleError, .blocked(.lastActiveDisplay))
         }
         XCTAssertTrue(backend.setEnabledCalls.isEmpty)
     }
@@ -50,7 +50,7 @@ final class DisplayControllerTests: XCTestCase {
         let (backend, c) = make([Fixtures.lg(), Fixtures.g70()])
         backend.driftOthersOnChange = true
         backend.failApply = true
-        guard case .doneWithWarning = try c.disable(uuid: "G70") else { return XCTFail("경고 기대") }
+        guard case .doneWithWarning = try c.disable(uuid: "G70") else { return XCTFail("expected a warning") }
     }
 
     func testEnableRestoresLastMode() throws {

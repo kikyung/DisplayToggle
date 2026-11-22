@@ -55,7 +55,20 @@ public protocol DisplayBackend: AnyObject {
     func apply(layout: LayoutSnapshot) throws
 }
 
+/// 끌 수 없는 이유. 화면에 표시할 문장은 UI 계층에서 현지화한다.
+public enum DenyReason: Equatable {
+    case displayNotFound
+    case alreadyOff
+    case lastActiveDisplay
+}
+
+/// 동작은 성공했지만 사용자에게 알려야 하는 경고.
+public enum ToggleWarning: Equatable {
+    case layoutNotRestored
+}
+
 public enum DisplayToggleError: Error, Equatable {
-    case blocked(String)
+    case blocked(DenyReason)
+    /// 기술적인 상세 설명. 현지화하지 않는다.
     case backend(String)
 }
