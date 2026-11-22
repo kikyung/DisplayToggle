@@ -99,7 +99,12 @@ public final class DisplayController {
 
     private func restoreIfChanged(expected: LayoutSnapshot) -> ToggleOutcome {
         let after = Self.snapshot(of: backend.connectedDisplays())
-        let drifted = expected.filter { after[$0.key] != $0.value }
+        let drifted = expected.filter { uuid, placement in
+            !Self.matches(placement, actual: after[uuid], compareOrigin: after.count != 1)
+        }.mapValues { placement in
+            // A lone display defines the coordinate origin.
+            after.count == 1 ? DisplayPlacement(mode: placement.mode, x: 0, y: 0) : placement
+        }
         if drifted.isEmpty { return .done }
         do {
             try backend.apply(layout: drifted)
@@ -107,9 +112,15 @@ public final class DisplayController {
             return .doneWithWarning(.layoutNotRestored)
         }
         let verify = Self.snapshot(of: backend.connectedDisplays())
-        if drifted.contains(where: { verify[$0.key] != $0.value }) {
+        if drifted.contains(where: { !Self.matches($0.value, actual: verify[$0.key], compareOrigin: verify.count != 1) }) {
             return .doneWithWarning(.layoutNotRestored)
         }
         return .done
     }
+
+    private static func matches(_ expected: DisplayPlacement, actual: DisplayPlacement?, compareOrigin: Bool) -> Bool {
+        guard let actual else { return false }
+        return compareOrigin ? actual == expected : actual.mode == expected.mode
+    }
+
 }

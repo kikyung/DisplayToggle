@@ -16,6 +16,34 @@ final class DisplayControllerTests: XCTestCase {
         XCTAssertEqual(entries.last?.isActive, false)
     }
 
+    func testDisplayWithoutSafeRecoveryCannotBeDisabled() {
+        var lg = Fixtures.lg()
+        lg.canTurnOffSafely = false
+        let (backend, c) = make([lg, Fixtures.g70()])
+
+        XCTAssertEqual(c.disableDecision(uuid: "LG"), .denied(reason: .unsafeToTurnOff))
+        XCTAssertThrowsError(try c.disable(uuid: "LG")) {
+            XCTAssertEqual($0 as? DisplayToggleError, .blocked(.unsafeToTurnOff))
+        }
+        XCTAssertTrue(backend.setEnabledCalls.isEmpty)
+        XCTAssertTrue(c.registry.offByApp.isEmpty)
+    }
+
+    func testMissingDisplayUsesRememberedIDOnlyForRecovery() {
+        XCTAssertEqual(CoreGraphicsBackend.resolveDisplayID(
+            enabled: true, onlineMatch: nil, onlineIDs: [1], rememberedID: 2
+        ), 2)
+        XCTAssertNil(CoreGraphicsBackend.resolveDisplayID(
+            enabled: false, onlineMatch: nil, onlineIDs: [1], rememberedID: 2
+        ))
+        XCTAssertNil(CoreGraphicsBackend.resolveDisplayID(
+            enabled: true, onlineMatch: nil, onlineIDs: [1, 2], rememberedID: 2
+        ))
+        XCTAssertEqual(CoreGraphicsBackend.resolveDisplayID(
+            enabled: true, onlineMatch: 3, onlineIDs: [1, 3], rememberedID: 2
+        ), 3)
+    }
+
     func testDisableLastDisplayIsRejectedAndBackendUntouched() {
         let (backend, c) = make([Fixtures.lg(), Fixtures.g70(active: false)])
         XCTAssertThrowsError(try c.disable(uuid: "LG")) {
@@ -38,6 +66,14 @@ final class DisplayControllerTests: XCTestCase {
         XCTAssertEqual(try c.disable(uuid: "G70"), .done)
         XCTAssertEqual(backend.displays.first { $0.uuid == "LG" }?.placement, Fixtures.lg().placement)
         XCTAssertEqual(backend.applyCalls.count, 1)
+    }
+
+    func testRemainingDisplayRestoresModeAtSingleDisplayOrigin() throws {
+        let (backend, c) = make([Fixtures.lg(), Fixtures.g70()])
+        backend.driftOthersOnChange = true
+
+        XCTAssertEqual(try c.disable(uuid: "LG"), .done)
+        XCTAssertEqual(backend.applyCalls.first?["G70"], DisplayPlacement(mode: Fixtures.modeG70, x: 0, y: 0))
     }
 
     func testNoApplyWhenNothingDrifted() throws {

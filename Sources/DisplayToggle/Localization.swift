@@ -13,8 +13,9 @@ func L(_ key: String, _ args: CVarArg...) -> String {
 extension DenyReason {
     var localized: String {
         switch self {
-        case .displayNotFound: return L("Display not found")
+        case .displayNotFound: return L("Display unavailable. Check the cable and input.")
         case .alreadyOff: return L("Already off")
+        case .unsafeToTurnOff: return L("Turning off is blocked to prevent losing this display")
         case .lastActiveDisplay: return L("Cannot turn off the last display")
         }
     }

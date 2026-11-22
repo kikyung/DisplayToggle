@@ -15,6 +15,9 @@ public enum SafetyGuard {
         guard target.isActive else {
             return .denied(reason: .alreadyOff)
         }
+        guard target.canTurnOffSafely else {
+            return .denied(reason: .unsafeToTurnOff)
+        }
         let remaining = displays.filter { $0.isActive && $0.uuid != uuid }
         if remaining.isEmpty {
             return .denied(reason: .lastActiveDisplay)

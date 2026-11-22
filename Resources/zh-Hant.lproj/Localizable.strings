@@ -8,9 +8,11 @@
 "Buy me a coffee" = "請我喝杯咖啡";
 "Quit" = "結束";
 "No active display was left, so the displays that were turned off were turned on again" = "沒有處於開啟狀態的顯示器，已重新開啟先前關閉的顯示器";
-"Failed: %@" = "失敗：%@";
+"Could not change the display. Try again." = "無法變更顯示器狀態。請再試一次。";
 "Some displays could not be turned on" = "部分顯示器無法開啟";
-"Display not found" = "找不到顯示器";
+"Display unavailable. Check the cable and input." = "找不到顯示器。請檢查線材和輸入來源。";
 "Already off" = "已處於關閉狀態";
 "Cannot turn off the last display" = "無法關閉最後一台顯示器";
 "Could not restore the resolution and arrangement of other displays" = "無法還原其他顯示器的解析度和排列";
+
+"Turning off is blocked to prevent losing this display" = "為防止無法辨識此顯示器，已停用關閉操作";

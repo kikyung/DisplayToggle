@@ -8,9 +8,11 @@
 "Buy me a coffee" = "コーヒーをおごる";
 "Quit" = "終了";
 "No active display was left, so the displays that were turned off were turned on again" = "オンのディスプレイがなくなったため、オフにしていたディスプレイを再びオンにしました";
-"Failed: %@" = "失敗: %@";
+"Could not change the display. Try again." = "ディスプレイの状態を変更できませんでした。もう一度お試しください。";
 "Some displays could not be turned on" = "一部のディスプレイをオンにできませんでした";
-"Display not found" = "ディスプレイが見つかりません";
+"Display unavailable. Check the cable and input." = "ディスプレイが見つかりません。ケーブルと入力を確認してください。";
 "Already off" = "すでにオフです";
 "Cannot turn off the last display" = "最後のディスプレイはオフにできません";
 "Could not restore the resolution and arrangement of other displays" = "他のディスプレイの解像度と配置を復元できませんでした";
+
+"Turning off is blocked to prevent losing this display" = "ディスプレイが認識されなくなるのを防ぐため、オフにできません";

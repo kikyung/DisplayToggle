@@ -8,9 +8,11 @@
 "Buy me a coffee" = "Offrez-moi un café";
 "Quit" = "Quitter";
 "No active display was left, so the displays that were turned off were turned on again" = "Aucun écran actif ne restait : les écrans éteints ont été rallumés";
-"Failed: %@" = "Échec : %@";
+"Could not change the display. Try again." = "Impossible de modifier l’état de l’écran. Réessayez.";
 "Some displays could not be turned on" = "Certains écrans n’ont pas pu être allumés";
-"Display not found" = "Écran introuvable";
+"Display unavailable. Check the cable and input." = "Écran indisponible. Vérifiez le câble et la source d’entrée.";
 "Already off" = "Déjà éteint";
 "Cannot turn off the last display" = "Impossible d’éteindre le dernier écran";
 "Could not restore the resolution and arrangement of other displays" = "Impossible de restaurer la résolution et la disposition des autres écrans";
+
+"Turning off is blocked to prevent losing this display" = "Extinction bloquée pour éviter que cet écran ne soit plus détecté";

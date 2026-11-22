@@ -37,6 +37,8 @@ The menu follows the system language when a translation is available and falls b
 
 DisplayToggle uses a private CoreGraphics function. macOS updates can change or remove it. If the function is unavailable, the menu disables display toggling. This private API also prevents distribution through the Mac App Store.
 
+Some displays disappear from the macOS online list when turned off. DisplayToggle saves the information needed to recover them within the current login session before turning them off. If it cannot save that information, it leaves the display on.
+
 The app stores display names, UUIDs, layout information, and its recovery list locally in `~/Library/Application Support/DisplayToggle/displays.json`.
 
 ## Develop
