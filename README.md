@@ -109,7 +109,6 @@ swift test       # unit tests with a fake display backend
 | `Sources/DisplayToggle` | Menu bar app (AppKit) |
 | `Resources/*.lproj` | Localized menu strings |
 | `Tests/DisplayToggleCoreTests` | Unit tests |
-| `docs/superpowers` | Design spec and implementation plan |
 
 Source code was written from scratch. The only technique shared with other display tools is the publicly documented idea of disabling a display through the private CoreGraphics call.
 

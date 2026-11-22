@@ -1,3 +1,24 @@
+# Build output
 .build/
+.swiftpm/
 *.app
+DerivedData/
+xcuserdata/
+
+# Local planning docs and agent tooling (kept on disk, not published)
+docs/superpowers/
+.kiro/
+.gstack/
+
+# Secrets and signing material
+.env
+.env.*
+*.pem
+*.p12
+*.p8
+*.key
+*.mobileprovision
+*.cer
+
+# macOS
 .DS_Store
