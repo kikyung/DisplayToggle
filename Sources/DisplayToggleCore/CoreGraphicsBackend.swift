@@ -8,6 +8,8 @@ public final class CoreGraphicsBackend: DisplayBackend {
     private typealias ConfigureEnabledFn = @convention(c) (CGDisplayConfigRef?, CGDirectDisplayID, Bool) -> CGError
 
     private let configureEnabled: ConfigureEnabledFn?
+    // IDs are valid only within the current app run and may be reused.
+    private var disabledDisplayIDs: [String: CGDirectDisplayID] = [:]
 
     /// 심볼을 찾지 못하면 nil이 아니라 isToggleAvailable == false 상태로 만든다.
     public init() {
@@ -25,7 +27,7 @@ public final class CoreGraphicsBackend: DisplayBackend {
 
     public func connectedDisplays() -> [DisplayInfo] {
         let names = Self.screenNames()
-        return Self.onlineIDs().compactMap { id in
+        return (Self.onlineIDs() ?? []).compactMap { id in
             guard let uuid = Self.uuid(of: id) else { return nil }
             let active = CGDisplayIsActive(id) != 0
             return DisplayInfo(
@@ -33,7 +35,8 @@ public final class CoreGraphicsBackend: DisplayBackend {
                 name: names[id],
                 isActive: active,
                 isBuiltin: CGDisplayIsBuiltin(id) != 0,
-                placement: active ? Self.placement(of: id) : nil
+                placement: active ? Self.placement(of: id) : nil,
+                canTurnOffSafely: Self.canTurnOffSafely(id)
             )
         }
     }
@@ -42,8 +45,21 @@ public final class CoreGraphicsBackend: DisplayBackend {
         guard let fn = configureEnabled else {
             throw DisplayToggleError.backend("CGSConfigureDisplayEnabled is not available on this macOS")
         }
-        guard let id = Self.onlineIDs().first(where: { Self.uuid(of: $0) == uuid }) else {
-            throw DisplayToggleError.backend("Display not found")
+        guard let onlineIDs = Self.onlineIDs() else {
+            throw DisplayToggleError.backend("CGGetOnlineDisplayList failed")
+        }
+        let onlineMatch = onlineIDs.first { Self.uuid(of: $0) == uuid }
+        let rememberedID = disabledDisplayIDs[uuid].flatMap { id in
+            let reportedUUID = Self.uuid(of: id)
+            return reportedUUID == nil || reportedUUID == uuid ? id : nil
+        }
+        guard let id = Self.resolveDisplayID(
+            enabled: enabled, onlineMatch: onlineMatch, onlineIDs: onlineIDs, rememberedID: rememberedID
+        ) else {
+            throw DisplayToggleError.blocked(.displayNotFound)
+        }
+        if !enabled && !Self.canTurnOffSafely(id) {
+            throw DisplayToggleError.blocked(.unsafeToTurnOff)
         }
         var config: CGDisplayConfigRef?
         guard CGBeginDisplayConfiguration(&config) == .success else {
@@ -58,10 +74,24 @@ public final class CoreGraphicsBackend: DisplayBackend {
         guard c == .success else {
             throw DisplayToggleError.backend("CGCompleteDisplayConfiguration failed (\(c.rawValue))")
         }
+        if enabled {
+            if onlineMatch == nil {
+                guard connectedDisplays().contains(where: { $0.uuid == uuid && $0.isActive }) else {
+                    throw DisplayToggleError.backend("The display did not return after the enable request")
+                }
+            }
+            disabledDisplayIDs.removeValue(forKey: uuid)
+        } else {
+            disabledDisplayIDs = disabledDisplayIDs.filter { $0.value != id }
+            disabledDisplayIDs[uuid] = id
+        }
     }
 
     public func apply(layout: LayoutSnapshot) throws {
-        let ids = Dictionary(uniqueKeysWithValues: Self.onlineIDs().compactMap { id in
+        guard let onlineIDs = Self.onlineIDs() else {
+            throw DisplayToggleError.backend("CGGetOnlineDisplayList failed")
+        }
+        let ids = Dictionary(uniqueKeysWithValues: onlineIDs.compactMap { id in
             Self.uuid(of: id).map { ($0, id) }
         })
         var config: CGDisplayConfigRef?
@@ -83,11 +113,33 @@ public final class CoreGraphicsBackend: DisplayBackend {
 
     // MARK: - 헬퍼
 
-    private static func onlineIDs() -> [CGDirectDisplayID] {
+    private static func canTurnOffSafely(_ id: CGDirectDisplayID) -> Bool {
+        canTurnOffSafely(vendor: CGDisplayVendorNumber(id), model: CGDisplayModelNumber(id))
+    }
+
+    static func canTurnOffSafely(vendor: UInt32, model: UInt32) -> Bool {
+        // This LG HDR 4K model disappeared from CoreGraphics after being disabled
+        // and still needs a recovery path that survives an app restart.
+        !(vendor == 7789 && model == 23514)
+    }
+
+    static func resolveDisplayID(
+        enabled: Bool,
+        onlineMatch: CGDirectDisplayID?,
+        onlineIDs: [CGDirectDisplayID],
+        rememberedID: CGDirectDisplayID?
+    ) -> CGDirectDisplayID? {
+        if let onlineMatch { return onlineMatch }
+        guard enabled, let rememberedID, !onlineIDs.contains(rememberedID) else { return nil }
+        return rememberedID
+    }
+
+    private static func onlineIDs() -> [CGDirectDisplayID]? {
         var count: UInt32 = 0
-        CGGetOnlineDisplayList(0, nil, &count)
+        guard CGGetOnlineDisplayList(0, nil, &count) == .success else { return nil }
         var ids = [CGDirectDisplayID](repeating: 0, count: Int(count))
-        CGGetOnlineDisplayList(count, &ids, &count)
+        guard count > 0 else { return [] }
+        guard CGGetOnlineDisplayList(count, &ids, &count) == .success else { return nil }
         return Array(ids.prefix(Int(count)))
     }
 

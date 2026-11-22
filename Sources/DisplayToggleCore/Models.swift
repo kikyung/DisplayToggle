@@ -35,13 +35,15 @@ public struct DisplayInfo: Equatable {
     public var isActive: Bool
     public var isBuiltin: Bool
     public var placement: DisplayPlacement?
+    public var canTurnOffSafely: Bool
 
-    public init(uuid: String, name: String?, isActive: Bool, isBuiltin: Bool = false, placement: DisplayPlacement? = nil) {
+    public init(uuid: String, name: String?, isActive: Bool, isBuiltin: Bool = false, placement: DisplayPlacement? = nil, canTurnOffSafely: Bool = true) {
         self.uuid = uuid
         self.name = name
         self.isActive = isActive
         self.isBuiltin = isBuiltin
         self.placement = placement
+        self.canTurnOffSafely = canTurnOffSafely
     }
 }
 
@@ -60,6 +62,7 @@ public enum DenyReason: Equatable {
     case displayNotFound
     case alreadyOff
     case lastActiveDisplay
+    case unsafeToTurnOff
 }
 
 /// 동작은 성공했지만 사용자에게 알려야 하는 경고.

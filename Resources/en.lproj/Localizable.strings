@@ -8,9 +8,11 @@
 "Buy me a coffee" = "Buy me a coffee";
 "Quit" = "Quit";
 "No active display was left, so the displays that were turned off were turned on again" = "No active display was left, so the displays that were turned off were turned on again";
-"Failed: %@" = "Failed: %@";
+"Could not change the display. Try again." = "Could not change the display. Try again.";
 "Some displays could not be turned on" = "Some displays could not be turned on";
-"Display not found" = "Display not found";
+"Display unavailable. Check the cable and input." = "Display unavailable. Check the cable and input.";
 "Already off" = "Already off";
 "Cannot turn off the last display" = "Cannot turn off the last display";
 "Could not restore the resolution and arrangement of other displays" = "Could not restore the resolution and arrangement of other displays";
+
+"Turning off is blocked to prevent losing this display" = "Turning off is blocked to prevent losing this display";

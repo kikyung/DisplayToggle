@@ -16,6 +16,35 @@ final class DisplayControllerTests: XCTestCase {
         XCTAssertEqual(entries.last?.isActive, false)
     }
 
+    func testDisplayWithKnownRecoveryFailureCannotBeDisabled() {
+        var lg = Fixtures.lg()
+        lg.canTurnOffSafely = CoreGraphicsBackend.canTurnOffSafely(vendor: 7789, model: 23514)
+        let (backend, c) = make([lg, Fixtures.g70()])
+
+        XCTAssertEqual(c.disableDecision(uuid: "LG"), .denied(reason: .unsafeToTurnOff))
+        XCTAssertThrowsError(try c.disable(uuid: "LG")) {
+            XCTAssertEqual($0 as? DisplayToggleError, .blocked(.unsafeToTurnOff))
+        }
+        XCTAssertTrue(backend.setEnabledCalls.isEmpty)
+        XCTAssertTrue(c.registry.offByApp.isEmpty)
+        XCTAssertTrue(CoreGraphicsBackend.canTurnOffSafely(vendor: 19501, model: 57455))
+    }
+
+    func testMissingDisplayUsesRememberedIDOnlyForRecovery() {
+        XCTAssertEqual(CoreGraphicsBackend.resolveDisplayID(
+            enabled: true, onlineMatch: nil, onlineIDs: [1], rememberedID: 2
+        ), 2)
+        XCTAssertNil(CoreGraphicsBackend.resolveDisplayID(
+            enabled: false, onlineMatch: nil, onlineIDs: [1], rememberedID: 2
+        ))
+        XCTAssertNil(CoreGraphicsBackend.resolveDisplayID(
+            enabled: true, onlineMatch: nil, onlineIDs: [1, 2], rememberedID: 2
+        ))
+        XCTAssertEqual(CoreGraphicsBackend.resolveDisplayID(
+            enabled: true, onlineMatch: 3, onlineIDs: [1, 3], rememberedID: 2
+        ), 3)
+    }
+
     func testDisableLastDisplayIsRejectedAndBackendUntouched() {
         let (backend, c) = make([Fixtures.lg(), Fixtures.g70(active: false)])
         XCTAssertThrowsError(try c.disable(uuid: "LG")) {

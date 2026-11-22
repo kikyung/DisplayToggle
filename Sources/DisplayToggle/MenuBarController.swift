@@ -103,7 +103,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         } catch DisplayToggleError.blocked(let reason) {
             notice = reason.localized
         } catch {
-            notice = L("Failed: %@", String(describing: error))
+            NSLog("DisplayToggle: %@", String(describing: error))
+            notice = L("Could not change the display. Try again.")
         }
     }
 
