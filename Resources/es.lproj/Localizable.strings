@@ -1,0 +1,16 @@
+"Turning displays off is not available on this macOS" = "Apagar pantallas no está disponible en este macOS";
+"Displays" = "Pantallas";
+"%@ (%@)" = "%@ (%@)";
+"%@ (off)" = "%@ (apagada)";
+"Enable All" = "Encender todas";
+"About DisplayToggle" = "Acerca de DisplayToggle";
+"GitHub" = "GitHub";
+"Buy me a coffee" = "Invítame a un café";
+"Quit" = "Salir";
+"No active display was left, so the displays that were turned off were turned on again" = "No quedaba ninguna pantalla activa, así que se volvieron a encender las pantallas apagadas";
+"Failed: %@" = "Error: %@";
+"Some displays could not be turned on" = "No se pudieron encender algunas pantallas";
+"Display not found" = "Pantalla no encontrada";
+"Already off" = "Ya está apagada";
+"Cannot turn off the last display" = "No se puede apagar la última pantalla";
+"Could not restore the resolution and arrangement of other displays" = "No se pudo restaurar la resolución y la disposición de las otras pantallas";

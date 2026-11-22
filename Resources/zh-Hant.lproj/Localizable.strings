@@ -1,0 +1,16 @@
+"Turning displays off is not available on this macOS" = "此 macOS 不支援關閉顯示器";
+"Displays" = "顯示器";
+"%@ (%@)" = "%@ (%@)";
+"%@ (off)" = "%@ (已關閉)";
+"Enable All" = "全部開啟";
+"About DisplayToggle" = "關於 DisplayToggle";
+"GitHub" = "GitHub";
+"Buy me a coffee" = "請我喝杯咖啡";
+"Quit" = "結束";
+"No active display was left, so the displays that were turned off were turned on again" = "沒有處於開啟狀態的顯示器，已重新開啟先前關閉的顯示器";
+"Failed: %@" = "失敗：%@";
+"Some displays could not be turned on" = "部分顯示器無法開啟";
+"Display not found" = "找不到顯示器";
+"Already off" = "已處於關閉狀態";
+"Cannot turn off the last display" = "無法關閉最後一台顯示器";
+"Could not restore the resolution and arrangement of other displays" = "無法還原其他顯示器的解析度和排列";

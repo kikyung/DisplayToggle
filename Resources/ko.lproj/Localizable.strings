@@ -1,0 +1,16 @@
+"Turning displays off is not available on this macOS" = "이 macOS에서는 디스플레이 끄기를 사용할 수 없음";
+"Displays" = "디스플레이";
+"%@ (%@)" = "%@ (%@)";
+"%@ (off)" = "%@ (꺼짐)";
+"Enable All" = "모두 켜기";
+"About DisplayToggle" = "DisplayToggle 정보";
+"GitHub" = "GitHub";
+"Buy me a coffee" = "커피 한 잔 사주기";
+"Quit" = "종료";
+"No active display was left, so the displays that were turned off were turned on again" = "켜진 화면이 없어 꺼 둔 디스플레이를 다시 켰습니다";
+"Failed: %@" = "실패: %@";
+"Some displays could not be turned on" = "일부 디스플레이를 켜지 못했습니다";
+"Display not found" = "디스플레이를 찾을 수 없음";
+"Already off" = "이미 꺼져 있음";
+"Cannot turn off the last display" = "마지막 화면은 끌 수 없음";
+"Could not restore the resolution and arrangement of other displays" = "다른 디스플레이의 해상도와 배치를 복원하지 못했습니다";

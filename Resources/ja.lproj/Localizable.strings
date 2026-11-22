@@ -1,0 +1,16 @@
+"Turning displays off is not available on this macOS" = "このmacOSではディスプレイをオフにできません";
+"Displays" = "ディスプレイ";
+"%@ (%@)" = "%@ (%@)";
+"%@ (off)" = "%@ (オフ)";
+"Enable All" = "すべてオンにする";
+"About DisplayToggle" = "DisplayToggleについて";
+"GitHub" = "GitHub";
+"Buy me a coffee" = "コーヒーをおごる";
+"Quit" = "終了";
+"No active display was left, so the displays that were turned off were turned on again" = "オンのディスプレイがなくなったため、オフにしていたディスプレイを再びオンにしました";
+"Failed: %@" = "失敗: %@";
+"Some displays could not be turned on" = "一部のディスプレイをオンにできませんでした";
+"Display not found" = "ディスプレイが見つかりません";
+"Already off" = "すでにオフです";
+"Cannot turn off the last display" = "最後のディスプレイはオフにできません";
+"Could not restore the resolution and arrangement of other displays" = "他のディスプレイの解像度と配置を復元できませんでした";

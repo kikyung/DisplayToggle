@@ -33,7 +33,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.removeAllItems()
 
         if !backend.isToggleAvailable {
-            menu.addItem(disabledItem("이 macOS에서는 모니터 끄기를 사용할 수 없음"))
+            menu.addItem(disabledItem(L("Turning displays off is not available on this macOS")))
             menu.addItem(.separator())
         }
         if let notice {
@@ -41,7 +41,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             menu.addItem(.separator())
         }
 
-        menu.addItem(disabledItem("Displays"))
+        menu.addItem(disabledItem(L("Displays")))
         for entry in controller.entries() {
             let item = NSMenuItem(title: entry.name, action: #selector(toggle(_:)), keyEquivalent: "")
             item.target = self
@@ -49,32 +49,32 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             item.state = entry.isActive ? .on : .off
             if entry.isActive {
                 if case .denied(let reason) = controller.disableDecision(uuid: entry.uuid) {
-                    item.title = "\(entry.name)  (\(reason))"
+                    item.title = L("%@ (%@)", entry.name, reason.localized)
                     item.action = nil
                 }
             } else {
-                item.title = "\(entry.name)  (꺼짐)"
+                item.title = L("%@ (off)", entry.name)
             }
             if !backend.isToggleAvailable { item.action = nil }
             menu.addItem(item)
         }
 
         menu.addItem(.separator())
-        let all = NSMenuItem(title: "모두 켜기", action: #selector(enableAll), keyEquivalent: "")
+        let all = NSMenuItem(title: L("Enable All"), action: #selector(enableAll), keyEquivalent: "")
         all.target = self
         menu.addItem(all)
 
-        let about = NSMenuItem(title: "About DisplayToggle", action: #selector(showAbout), keyEquivalent: "")
+        let about = NSMenuItem(title: L("About DisplayToggle"), action: #selector(showAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
         if !AppLinks.github.isEmpty, let url = URL(string: AppLinks.github) {
-            menu.addItem(linkItem("GitHub", url))
+            menu.addItem(linkItem(L("GitHub"), url))
         }
         if !AppLinks.buyMeACoffee.isEmpty, let url = URL(string: AppLinks.buyMeACoffee) {
-            menu.addItem(linkItem("Buy me a coffee", url))
+            menu.addItem(linkItem(L("Buy me a coffee"), url))
         }
 
-        let quit = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: L("Quit"), action: #selector(quit), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
     }
@@ -84,7 +84,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     /// 구성 변경 콜백에서 호출한다. (G3)
     func handleReconfiguration() {
         let recovered = controller.recoverIfNeeded()
-        if !recovered.isEmpty { notice = "켜진 화면이 없어 꺼 둔 모니터를 다시 켰습니다" }
+        if !recovered.isEmpty { notice = L("No active display was left, so the displays that were turned off were turned on again") }
     }
 
     @objc private func toggle(_ sender: NSMenuItem) {
@@ -93,18 +93,18 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             let outcome = sender.state == .on ? try controller.disable(uuid: uuid) : try controller.enable(uuid: uuid)
             switch outcome {
             case .done: notice = nil
-            case .doneWithWarning(let message): notice = message
+            case .doneWithWarning(let warning): notice = warning.localized
             }
         } catch DisplayToggleError.blocked(let reason) {
-            notice = reason
+            notice = reason.localized
         } catch {
-            notice = "실패: \(error)"
+            notice = L("Failed: %@", String(describing: error))
         }
     }
 
     @objc private func enableAll() {
         let failed = controller.enableAll()
-        notice = failed.isEmpty ? nil : "일부 모니터를 켜지 못했습니다"
+        notice = failed.isEmpty ? nil : L("Some displays could not be turned on")
     }
 
     @objc private func showAbout() {
