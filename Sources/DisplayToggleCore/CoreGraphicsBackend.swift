@@ -8,11 +8,23 @@ public final class CoreGraphicsBackend: DisplayBackend {
     private typealias ConfigureEnabledFn = @convention(c) (CGDisplayConfigRef?, CGDirectDisplayID, Bool) -> CGError
 
     private let configureEnabled: ConfigureEnabledFn?
-    // IDs are valid only within the current app run and may be reused.
-    private var disabledDisplayIDs: [String: CGDirectDisplayID] = [:]
+    private let recoveryJournal: DisplayRecoveryJournal?
+    private let requiresRecoveryJournal: Bool
+    private var disabledDisplayIDs: [String: CGDirectDisplayID]
+
+    public var pendingRecoveryUUIDs: Set<String> { Set(disabledDisplayIDs.keys) }
 
     /// 심볼을 찾지 못하면 nil이 아니라 isToggleAvailable == false 상태로 만든다.
-    public init() {
+    public init(recoveryURL: URL? = nil) {
+        let session = CGSessionCopyCurrentDictionary() as? [String: Any]
+        let sessionID = (session?["CGSSessionUniqueSessionUUID"] as? String).flatMap(UUID.init(uuidString:))
+        let journal = recoveryURL.flatMap { url in
+            sessionID.map { DisplayRecoveryJournal(url: url, sessionID: $0) }
+        }
+        recoveryJournal = journal
+        requiresRecoveryJournal = recoveryURL != nil
+        disabledDisplayIDs = journal?.load() ?? [:]
+
         let rtldDefault = UnsafeMutableRawPointer(bitPattern: -2)
         if let sym = dlsym(rtldDefault, "CGSConfigureDisplayEnabled") {
             configureEnabled = unsafeBitCast(sym, to: ConfigureEnabledFn.self)
@@ -36,7 +48,7 @@ public final class CoreGraphicsBackend: DisplayBackend {
                 isActive: active,
                 isBuiltin: CGDisplayIsBuiltin(id) != 0,
                 placement: active ? Self.placement(of: id) : nil,
-                canTurnOffSafely: Self.canTurnOffSafely(id)
+                canTurnOffSafely: canTurnOffSafely
             )
         }
     }
@@ -58,8 +70,12 @@ public final class CoreGraphicsBackend: DisplayBackend {
         ) else {
             throw DisplayToggleError.blocked(.displayNotFound)
         }
-        if !enabled && !Self.canTurnOffSafely(id) {
+        if !enabled && !canTurnOffSafely {
             throw DisplayToggleError.blocked(.unsafeToTurnOff)
+        }
+        if enabled && onlineMatch != nil && CGDisplayIsActive(id) != 0 {
+            forgetRecoveryID(for: uuid)
+            return
         }
         var config: CGDisplayConfigRef?
         guard CGBeginDisplayConfiguration(&config) == .success else {
@@ -69,6 +85,18 @@ public final class CoreGraphicsBackend: DisplayBackend {
         guard r == .success else {
             CGCancelDisplayConfiguration(config)
             throw DisplayToggleError.backend("CGSConfigureDisplayEnabled failed (\(r.rawValue))")
+        }
+        if !enabled {
+            var updated = disabledDisplayIDs.filter { $0.value != id }
+            updated[uuid] = id
+            // Save before committing the change so the next app run can recover after a crash.
+            do {
+                try recoveryJournal?.save(updated)
+            } catch {
+                CGCancelDisplayConfiguration(config)
+                throw error
+            }
+            disabledDisplayIDs = updated
         }
         let c = CGCompleteDisplayConfiguration(config, .forSession)
         guard c == .success else {
@@ -80,10 +108,7 @@ public final class CoreGraphicsBackend: DisplayBackend {
                     throw DisplayToggleError.backend("The display did not return after the enable request")
                 }
             }
-            disabledDisplayIDs.removeValue(forKey: uuid)
-        } else {
-            disabledDisplayIDs = disabledDisplayIDs.filter { $0.value != id }
-            disabledDisplayIDs[uuid] = id
+            forgetRecoveryID(for: uuid)
         }
     }
 
@@ -113,14 +138,14 @@ public final class CoreGraphicsBackend: DisplayBackend {
 
     // MARK: - 헬퍼
 
-    private static func canTurnOffSafely(_ id: CGDirectDisplayID) -> Bool {
-        canTurnOffSafely(vendor: CGDisplayVendorNumber(id), model: CGDisplayModelNumber(id))
+    private func forgetRecoveryID(for uuid: String) {
+        if disabledDisplayIDs.removeValue(forKey: uuid) != nil {
+            try? recoveryJournal?.save(disabledDisplayIDs)
+        }
     }
 
-    static func canTurnOffSafely(vendor: UInt32, model: UInt32) -> Bool {
-        // This LG HDR 4K model disappeared from CoreGraphics after being disabled
-        // and still needs a recovery path that survives an app restart.
-        !(vendor == 7789 && model == 23514)
+    private var canTurnOffSafely: Bool {
+        !requiresRecoveryJournal || recoveryJournal != nil
     }
 
     static func resolveDisplayID(
