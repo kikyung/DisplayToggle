@@ -84,7 +84,12 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     /// 구성 변경 콜백에서 호출한다. (G3)
     func handleReconfiguration() {
         let recovered = controller.recoverIfNeeded()
-        if !recovered.isEmpty { notice = L("No active display was left, so the displays that were turned off were turned on again") }
+        guard !recovered.isEmpty else { return }
+        if controller.registry.offByApp.isEmpty {
+            notice = L("No active display was left, so the displays that were turned off were turned on again")
+        } else {
+            notice = L("Some displays could not be turned on")
+        }
     }
 
     @objc private func toggle(_ sender: NSMenuItem) {

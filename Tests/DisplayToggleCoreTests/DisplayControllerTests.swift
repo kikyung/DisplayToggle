@@ -74,6 +74,19 @@ final class DisplayControllerTests: XCTestCase {
         XCTAssertTrue(c.registry.offByApp.isEmpty)
     }
 
+    func testFailedAutomaticRecoveryRemainsEligibleForRetry() {
+        let (backend, c) = make([])
+        c.registry.markOff("G70")
+
+        XCTAssertEqual(c.recoverIfNeeded(), [])
+        XCTAssertEqual(c.registry.offByApp, ["G70"])
+
+        backend.displays = [Fixtures.g70(active: false)]
+        XCTAssertEqual(c.recoverIfNeeded(), ["G70"])
+        XCTAssertEqual(backend.displays.first?.isActive, true)
+        XCTAssertTrue(c.registry.offByApp.isEmpty)
+    }
+
     func testNoRecoveryWhenSomethingIsActive() throws {
         let (backend, c) = make([Fixtures.lg(), Fixtures.g70()])
         _ = try c.disable(uuid: "G70")
@@ -89,6 +102,22 @@ final class DisplayControllerTests: XCTestCase {
         c.recoverAtLaunch()
         XCTAssertEqual(backend.displays[1].isActive, true)
         XCTAssertTrue(reg.offByApp.isEmpty)
+    }
+
+    func testLaunchRecoveryKeepsOnlyFailedDisplaysForEnableAll() {
+        let (backend, c) = make([Fixtures.lg(active: false)])
+        c.registry.markOff("LG")
+        c.registry.markOff("G70")
+
+        c.recoverAtLaunch()
+
+        XCTAssertEqual(backend.displays.first?.isActive, true)
+        XCTAssertEqual(c.registry.offByApp, ["G70"])
+
+        backend.displays.append(Fixtures.g70(active: false))
+        XCTAssertEqual(c.enableAll(), [])
+        XCTAssertEqual(backend.displays.last?.isActive, true)
+        XCTAssertTrue(c.registry.offByApp.isEmpty)
     }
 
     func testEnableAllEnablesEveryOffDisplay() throws {
